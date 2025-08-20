@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Ordjagt</title>
+  <style>
+    :root{--ink:#111827;--muted:#6b7280;--card:#fff;--bg:#f7f7fb;--ok:#10b981}
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+    .wrap{max-width:960px;margin:22px auto;padding:0 16px}
+    .card{background:var(--card);border-radius:14px;box-shadow:0 10px 24px rgba(0,0,0,.08);padding:16px}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .pill{background:#eef2ff;color:#1e40af;border-radius:999px;padding:6px 10px;font-weight:700}
+    .chip{padding:8px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer}
+    #bank{display:flex;flex-wrap:wrap;gap:8px}
+    #found{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+    .found-item{background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center;font-weight:700}
+    button{border:0;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:600}
+    button.ghost{background:#eef2ff;color:#1e40af}
+    textarea,input{width:100%;padding:10px;border-radius:10px;border:1px solid #e5e7eb}
+    .hidden{display:none}
+    .muted{color:var(--muted)}
+    h1{margin:.2rem 0 .5rem}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧩 Ordjagt</h1>
+  <p class="muted">Byg så mange gyldige ord som muligt på tid. Morfemer kan genbruges – men samme ord tæller kun én gang.</p>
+
+  <!-- Setup -->
+  <div class="card">
+    <div class="row">
+      <span class="pill">⏱️ Tid: <b id="timeLeft">60</b>s</span>
+      <span class="pill">🎯 Point: <b id="points">0</b></span>
+      <span class="pill">📚 Ord: <b id="wordsCount">0</b></span>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <label style="flex:1;min-width:180px">Varighed (sek.)
+        <input id="duration" type="number" min="15" max="600" value="60">
+      </label>
+      <label style="flex:1;min-width:260px">Morfemer (kommasepareret)
+        <textarea id="morphemes">bog, stav, læse, skrive, lærer, skole, barn, ord, leg, ven, dag, sang</textarea>
+      </label>
+      <label style="flex:1;min-width:260px">Ord-liste (ét ord pr. linje)
+        <textarea id="wordlist">bogstav
+læsebog
+skrivebog
+skolebarn
+ordleg
+venskab
+skolelærer
+barnesang
+skolesang
+læsedag</textarea>
+      </label>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="start">Start ▶</button>
+      <button id="reset" class="ghost">Nulstil</button>
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="game" class="card hidden" style="margin-top:16px">
+    <h3>Morfem-bank</h3>
+    <div id="bank"></div>
+
+    <p style="margin-top:10px">Dit ord: <b id="currentWord">—</b></p>
+    <div class="row">
+      <button id="submit">Tjek ord ✅</button>
+      <button id="undo" class="ghost">Fortryd ⟲</button>
+      <button id="clear" class="ghost">Nulstil ✖</button>
+      <button id="shuffle" class="ghost">Bland 🔀</button>
+    </div>
+
+    <p id="message" class="muted"></p>
+
+    <h3>Fundne ord</h3>
+    <div id="found"></div>
+  </div>
+</div>
+
+<script>
+let morphemes=[], wordSet=new Set(), selected=[], foundSet=new Set();
+let tLeft=60, timer=null, points=0;
+
+const timeLeftEl=document.getElementById('timeLeft');
+const pointsEl=document.getElementById('points');
+const wordsCountEl=document.getElementById('wordsCount');
+const messageEl=document.getElementById('message');
+const currentEl=document.getElementById('currentWord');
+const bankEl=document.getElementById('bank');
+const foundEl=document.getElementById('found');
+
+function renderBank(){
+  bankEl.innerHTML='';
+  morphemes.forEach((m,i)=>{
+    const b=document.createElement('button');
+    b.className='chip';
+    b.textContent=m;
+    b.addEventListener('click',()=>{ selected.push(m); updateCurrent(); });
+    bankEl.appendChild(b);
+  });
+}
+function renderFound(){
+  foundEl.innerHTML='';
+  Array.from(foundSet).sort((a,b)=>a.localeCompare(b)).forEach(w=>{
+    const d=document.createElement('div');
+    d.className='found-item';
+    d.textContent=w;
+    foundEl.appendChild(d);
+  });
+  wordsCountEl.textContent=foundSet.size;
+}
+function updateCurrent(){ currentEl.textContent=selected.join('')||'—'; }
+function tick(){
+  clearTimeout(timer);
+  timeLeftEl.textContent=tLeft;
+  if(tLeft<=0){ end(); return; }
+  timer=setTimeout(()=>{ tLeft--; tick(); },1000);
+}
+function message(txt,ok){ messageEl.textContent=txt||''; messageEl.style.color= ok?'var(--ok)':'var(--muted)'; }
+
+function start(){
+  const duration=Math.max(15, Math.min(600, +document.getElementById('duration').value||60));
+  tLeft=duration; points=0; foundSet=new Set();
+  wordsCountEl.textContent='0'; pointsEl.textContent='0';
+
+  morphemes=document.getElementById('morphemes').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const list=document.getElementById('wordlist').value.split(/\r?\n/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+  wordSet=new Set(list);
+
+  selected=[]; renderBank(); renderFound(); updateCurrent(); message('');
+  document.getElementById('game').classList.remove('hidden');
+  tick();
+}
+function end(){ clearTimeout(timer); message('⏹ Tid slut!'); }
+
+function submit(){
+  const w=selected.join('').toLowerCase();
+  if(!w||w.length<3){ message('For kort.'); return; }
+  if(foundSet.has(w)){ message('Allerede fundet.'); return; }
+
+  // Gyldigt hvis i ordliste – eller hvis ordliste er tom (fri leg, ord ≥3)
+  const valid = wordSet.size ? wordSet.has(w) : (w.length>=3);
+  if(valid){
+    foundSet.add(w);
+    points++;
+    pointsEl.textContent=String(points);
+    renderFound();
+    message('✔ Godkendt!', true);
+    selected=[]; updateCurrent();
+  } else {
+    message('❌ Ikke i ordlisten.');
+  }
+}
+
+document.getElementById('start').addEventListener('click', start);
+document.getElementById('reset').addEventListener('click', ()=> location.reload());
+document.getElementById('submit').addEventListener('click', submit);
+document.getElementById('undo').addEventListener('click', ()=>{ selected.pop(); updateCurrent(); });
+document.getElementById('clear').addEventListener('click', ()=>{ selected=[]; updateCurrent(); message(''); });
+document.getElementById('shuffle').addEventListener('click', ()=>{
+  for(let i=morphemes.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [morphemes[i],morphemes[j]]=[morphemes[j],morphemes[i]]; }
+  renderBank();
+});
+
+// Genveje: Enter = tjek, Backspace = fortryd, Esc = nulstil ord
+window.addEventListener('keydown', e=>{
+  const gaming = !document.getElementById('game').classList.contains('hidden');
+  if(!gaming) return;
+  if(e.key==='Enter') submit();
+  if(e.key==='Backspace'){ e.preventDefault(); selected.pop(); updateCurrent(); }
+  if(e.key==='Escape'){ selected=[]; updateCurrent(); }
+});
+</script>
+</body>
+</html>
