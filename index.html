@@ -14,7 +14,6 @@
     .pill{background:#eef2ff;color:#1e40af;border-radius:999px;padding:6px 10px;font-weight:700}
     .muted{color:var(--muted)}
     h1{margin:.2rem 0 .5rem}
-    .section{margin-top:10px}
     .label{font-weight:800;margin:6px 0}
     .bank{display:flex;flex-wrap:wrap;gap:8px}
     .chip{padding:8px 12px;border:1px solid #e5e7eb;border-radius:999px;background:#fff;cursor:pointer}
@@ -33,10 +32,8 @@
 <body>
 <div class="wrap">
   <h1>🧩 Ordjagt – Morfemer</h1>
-  <p class="muted">Byg ord med morfemer: <b>forstavelse</b> (valgfri) + <b>rod</b> (obligatorisk) + <b>binde</b> (valgfri) + <b>afledning</b> (valgfri).  
-  Samme ord tæller kun én gang. Ordlisten (hvis brugt) er skjult for elever.</p>
+  <p class="muted">Byg ord med morfemer: <b>forstavelse</b> (valgfri) + <b>rod</b> (obligatorisk) + <b>binde</b> (valgfri) + <b>afledning</b> (valgfri). Facitlisten er skjult bag lærer-PIN.</p>
 
-  <!-- HUD -->
   <div class="card">
     <div class="row">
       <span class="pill">⏱️ Tid: <b id="timeLeft">60</b>s</span>
@@ -55,7 +52,7 @@
   </div>
 
   <!-- Morfem-banker -->
-  <div class="card section">
+  <div class="card" style="margin-top:12px">
     <div class="label">Forstavelser (præfikser)</div>
     <div id="bank-prefix" class="bank"></div>
 
@@ -68,29 +65,28 @@
     <div class="label">Afledningsmorfemer (suffikser)</div>
     <div id="bank-suf" class="bank"></div>
 
-    <div class="section">
+    <div class="row" style="margin-top:8px">
       <div>Dit ord: <b id="currentWord">—</b> <span id="structureMsg" class="hint"></span></div>
-      <div class="row" style="margin-top:8px">
-        <button id="submit">Tjek ord ✅</button>
-        <button id="undo" class="ghost">Fortryd ⟲</button>
-        <button id="clear" class="ghost">Nulstil ✖</button>
-        <button id="shuffle" class="ghost">Bland morfemer 🔀</button>
-        <button id="start" class="ghost">Start/Genstart ▶</button>
-      </div>
-      <div id="message" class="muted" style="margin-top:6px"></div>
     </div>
+    <div class="row" style="margin-top:8px">
+      <button id="submit">Tjek ord ✅</button>
+      <button id="undo" class="ghost">Fortryd ⟲</button>
+      <button id="clear" class="ghost">Nulstil ✖</button>
+      <button id="shuffle" class="ghost">Bland morfemer 🔀</button>
+      <button id="start" class="ghost">Start/Genstart ▶</button>
+    </div>
+    <div id="message" class="muted" style="margin-top:6px"></div>
   </div>
 
-  <!-- Fundne ord -->
-  <div class="card section">
+  <div class="card" style="margin-top:12px">
     <h3>Fundne ord</h3>
     <div id="foundWrap"><div id="found" class="grid"></div></div>
   </div>
 
-  <!-- Lærerpanel (skjult) -->
-  <div id="teacher" class="card section hidden">
+  <!-- Lærerpanel -->
+  <div id="teacher" class="card hidden" style="margin-top:12px">
     <h3>🔐 Lærerpanel</h3>
-    <p class="hint">Panelet er skjult for elever. Åbn med PIN. (Skift PIN i koden – se kommentar “LÆRERPIN”.)</p>
+    <p class="hint">Panelet er skjult for elever. Åbn med PIN. (Skift PIN i koden – se “TEACHER_PIN”.)</p>
     <div class="row">
       <label style="flex:1;min-width:260px">Forstavelser (komma)
         <textarea id="ta-prefix"></textarea>
@@ -110,10 +106,10 @@
         <textarea id="ta-wordlist" placeholder="Lad stå tom for ren struktur-check."></textarea>
       </label>
       <div style="flex:1;min-width:240px">
-        <label><input type="checkbox" id="ck-hide-found"> Skjul “Fundne ord” for elever (vis kun ved tidsudløb)</label><br>
-        <label><input type="checkbox" id="ck-use-wordlist" checked> Brug ordliste til validering (ud over struktur)</label><br>
-        <label><input type="checkbox" id="ck-allow-nolink" checked> Tillad ord uden bindemorfem</label><br>
-        <label><input type="checkbox" id="ck-allow-nosuf" checked> Tillad ord uden afledning</label><br>
+        <label><input type="checkbox" id="ck-hide-found"> Skjul “Fundne ord”</label><br>
+        <label><input type="checkbox" id="ck-use-wordlist" checked> Brug ordliste til validering</label><br>
+        <label><input type="checkbox" id="ck-allow-nolink" checked> Tillad uden bindemorfem</label><br>
+        <label><input type="checkbox" id="ck-allow-nosuf" checked> Tillad uden afledning</label><br>
         <button id="apply">Opdater sæt ▶</button>
       </div>
     </div>
@@ -123,9 +119,7 @@
 </div>
 
 <script>
-/*** LÆRERPIN – skift her hvis du vil ***/
-const TEACHER_PIN = "1234";
-/*****************************************/
+const TEACHER_PIN = "1234"; // ← skift denne
 
 let prefix=[], roots=[], links=[], sufs=[];
 let useWordlist=true, allowNoLink=true, allowNoSuf=true, hideFound=false;
@@ -147,18 +141,15 @@ const els = {
   duration: document.getElementById('duration'),
   name: document.getElementById('playerName'),
   teacher: document.getElementById('teacher'),
-
   bPrefix: document.getElementById('bank-prefix'),
   bRoot: document.getElementById('bank-root'),
   bLink: document.getElementById('bank-link'),
   bSuf: document.getElementById('bank-suf'),
-
   taPrefix: document.getElementById('ta-prefix'),
   taRoot: document.getElementById('ta-root'),
   taLink: document.getElementById('ta-link'),
   taSuf: document.getElementById('ta-suf'),
   taWordlist: document.getElementById('ta-wordlist'),
-
   ckHideFound: document.getElementById('ck-hide-found'),
   ckUseWordlist: document.getElementById('ck-use-wordlist'),
   ckAllowNoLink: document.getElementById('ck-allow-nolink'),
@@ -172,7 +163,6 @@ function chips(target, arr, type){
     b.className = 'chip';
     b.textContent = m;
     b.addEventListener('click', ()=>{
-      // toggle select (kun én pr. kategori)
       if (selected[type] === m){ selected[type] = null; b.classList.remove('active'); }
       else { selected[type] = m; [...target.children].forEach(c=>c.classList.remove('active')); b.classList.add('active'); }
       updateCurrent();
@@ -191,18 +181,13 @@ function renderBanks(){
 function updateCurrent(){
   const w = (selected.prefix||'') + (selected.root||'') + (selected.link||'') + (selected.suf||'');
   els.current.textContent = w || '—';
-  const parts = [
-    selected.prefix ? 'forst.' : '—',
-    selected.root ? 'rod' : '—',
-    selected.link ? 'binde' : '—',
-    selected.suf ? 'afl.' : '—'
-  ].join(' · ');
+  const parts = [ selected.prefix?'forst.':'—', selected.root?'rod':'—', selected.link?'binde':'—', selected.suf?'afl.':'—' ].join(' · ');
   els.struct.textContent = 'Struktur: ' + parts;
 }
 
 function renderFound(){
   els.found.innerHTML = '';
-  Array.from(foundSet).sort((a,b)=>a.localeCompare(b)).forEach(w=>{
+  Array.from(foundSet).sort().forEach(w=>{
     const d = document.createElement('div');
     d.className = 'found-item';
     d.textContent = w;
@@ -230,11 +215,9 @@ function tick(){
 }
 
 function validateStructure(){
-  // Krav: rod skal være valgt. Forstavelse/binde/afledning er valgfrie afhængig af indstillinger
   if (!selected.root) return { ok:false, reason:'Manglende rod' };
   if (!allowNoLink && !selected.link) return { ok:false, reason:'Kræver bindemorfem' };
   if (!allowNoSuf && !selected.suf) return { ok:false, reason:'Kræver afledning' };
-  // Simple rækkefølge: prefix -> root -> link -> suf (vi bygger allerede i den rækkefølge)
   return { ok:true };
 }
 
@@ -242,12 +225,9 @@ function submit(){
   const word = (selected.prefix||'') + (selected.root||'') + (selected.link||'') + (selected.suf||'');
   if (!word || word.length < 3){ setMsg('For kort.'); return; }
   if (foundSet.has(word)){ setMsg('Allerede fundet.'); return; }
-
-  // 1) Struktur
   const s = validateStructure();
   if (!s.ok){ setMsg('❌ '+s.reason); return; }
 
-  // 2) Ordlistetjek (valgfri)
   let valid = true;
   if (useWordlist && wordlistSet.size){ valid = wordlistSet.has(word.toLowerCase()); }
 
@@ -256,7 +236,6 @@ function submit(){
     points++; els.points.textContent = String(points);
     if (!hideFound) renderFound();
     setMsg('✔ Godkendt!', true);
-    // nulstil valg, men lad chips forblive synlige
     selected = { prefix:null, root:null, link:null, suf:null };
     [...els.bPrefix.children, ...els.bRoot.children, ...els.bLink.children, ...els.bSuf.children].forEach(c=>c.classList.remove('active'));
     updateCurrent();
@@ -265,7 +244,6 @@ function submit(){
   }
 }
 
-/*** Lærerpanel, data & toggles ***/
 function applyFromTeacher(){
   prefix = els.taPrefix.value.split(',').map(s=>s.trim()).filter(Boolean);
   roots  = els.taRoot.value.split(',').map(s=>s.trim()).filter(Boolean);
@@ -280,30 +258,30 @@ function applyFromTeacher(){
   renderBanks(); updateCurrent(); setMsg('Sæt opdateret!', true);
 }
 
-function initDefaults(){
-  // Standard-sæt (skoletema)
-  prefix = ['u-','for-','mis-','gen-','be-'];        // forstavelser
-  roots  = ['læs','skriv','bog','stav','lær','skole']; // rødder
-  links  = ['e','s'];                                 // bindemorfemer
-  sufs   = ['-er','-ning','-lig','-hed','-skab'];     // afledninger
-
-  // Hemmelig ordliste – kan stå tom
-  const hiddenWords = [
-    'bogstav','læsebog','skrivebog','skolestart','lærer-hed' // eksempel (vær fri til at skifte)
-  ];
-
-  els.taPrefix.value = prefix.join(', ');
-  els.taRoot.value   = roots.join(', ');
-  els.taLink.value   = links.join(', ');
-  els.taSuf.value    = sufs.join(', ');
-  els.taWordlist.value = hiddenWords.join('\n');
-
+function loadDefaults(){
+  const DEF = {
+    prefix: ['u-','for-','mis-','gen-','be-'],
+    roots:  ['læs','skriv','bog','stav','lær','skole'],
+    links:  ['e','s'],
+    sufs:   ['-er','-ning','-lig','-hed','-skab'],
+    hiddenWords: ['bogstav','læsebog','skrivebog','skolestart']
+  };
+  prefix = DEF.prefix.slice();
+  roots  = DEF.roots.slice();
+  links  = DEF.links.slice();
+  sufs   = DEF.sufs.slice();
+  wordlistSet = new Set(DEF.hiddenWords.map(w=>w.toLowerCase()));
+  renderBanks();
+  updateCurrent();
+  els.taPrefix.value = DEF.prefix.join(', ');
+  els.taRoot.value   = DEF.roots.join(', ');
+  els.taLink.value   = DEF.links.join(', ');
+  els.taSuf.value    = DEF.sufs.join(', ');
+  els.taWordlist.value = DEF.hiddenWords.join('\n');
   els.ckUseWordlist.checked = true;
   els.ckAllowNoLink.checked = true;
   els.ckAllowNoSuf.checked  = true;
   els.ckHideFound.checked   = false;
-
-  applyFromTeacher();
 }
 
 function shuffleBanks(){
@@ -314,37 +292,29 @@ function shuffleBanks(){
 
 /*** Events ***/
 document.getElementById('submit').addEventListener('click', submit);
-document.getElementById('undo').addEventListener('click', ()=>{ // fortryd: ryd sidste valgte i rækkefølge suf->link->root->prefix
-  if (selected.suf) selected.suf = null;
-  else if (selected.link) selected.link = null;
-  else if (selected.root) selected.root = null;
-  else if (selected.prefix) selected.prefix = null;
-  [...els.bPrefix.children, ...els.bRoot.children, ...els.bLink.children, ...els.bSuf.children].forEach(c=>c.classList.remove('active'));
-  updateCurrent();
-});
-document.getElementById('clear').addEventListener('click', ()=>{ selected={prefix:null,root:null,link:null,suf:null}; [...els.bPrefix.children, ...els.bRoot.children, ...els.bLink.children, ...els.bSuf.children].forEach(c=>c.classList.remove('active')); updateCurrent(); setMsg(''); });
+document.getElementById('undo').addEventListener('click', ()=>{ selected={prefix:null,root:null,link:null,suf:null}; updateCurrent(); });
+document.getElementById('clear').addEventListener('click', ()=>{ selected={prefix:null,root:null,link:null,suf:null}; updateCurrent(); setMsg(''); });
 document.getElementById('shuffle').addEventListener('click', shuffleBanks);
 document.getElementById('start').addEventListener('click', start);
 document.getElementById('apply').addEventListener('click', applyFromTeacher);
 
 // Keyboard: Enter/Backspace/Escape + L (lærer)
 window.addEventListener('keydown', (e)=>{
-  const gameActive = true; // altid aktiv i denne udgave
   if (e.key === 'Enter'){ submit(); }
-  else if (e.key === 'Backspace'){ e.preventDefault(); const order=['suf','link','root','prefix']; for(const k of order){ if (selected[k]){ selected[k]=null; break; } } updateCurrent(); }
-  else if (e.key === 'Escape'){ selected={prefix:null,root:null,link:null,suf:null}; [...els.bPrefix.children, ...els.bRoot.children, ...els.bLink.children, ...els.bSuf.children].forEach(c=>c.classList.remove('active')); updateCurrent(); }
-  else if (e.key.toLowerCase() === 'l'){ // lærerpanel
+  else if (e.key === 'Escape'){ selected={prefix:null,root:null,link:null,suf:null}; updateCurrent(); }
+  else if (e.key.toLowerCase() === 'l'){
     const pin = prompt('Indtast PIN for lærerpanel:');
     if (pin === TEACHER_PIN){ els.teacher.classList.toggle('hidden'); }
-    else if (pin) { alert('Forkert PIN'); }
+    else if (pin){ alert('Forkert PIN'); }
   }
 });
 
-// Init
-initDefaults();
-start();
+// INIT
+loadDefaults();
 renderFound();
+start();
 </script>
 </body>
 </html>
+
 
